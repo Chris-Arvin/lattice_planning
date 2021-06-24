@@ -23,6 +23,7 @@ def solveNOrderFunction(args):
     输出
         [k0,k1...kn], order
     """
+    print(args)
     order = 0
     error = 0
     # 与输入参数个数等阶数
