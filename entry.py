@@ -11,10 +11,10 @@ import lattice_planner as lp
 # 右手系，xyz。x对应s，y对应l
 class AdjustmentControlPointStruct_xytheta(list):
     def __init__(self, x=0.0, y=0.0, theta=0.0):
-        super().__init__([x, y, theta])
+        super().__init__([x, y, np.tan(theta*np.pi/180)])
         self.x = self[0]
         self.y = self[1]
-        self.theta = self[2]*180.0/np.pi
+        self.theta = np.tan(self[2]*np.pi/180)
 
 
 class AdjustmentControlPointStruct_txva(list):
@@ -62,6 +62,13 @@ def makeAdjustmentLine(positions, states,
     x_data = np.arange(positions[0].x, positions[-1].x, step * (1 if positions[0].x < positions[-1].x else -1))
     y_data = lp.getNOrderOutput(x_data, coef1, 0)
 
+    # 将总v和总a映射到x方向上
+    for i in range(len(states)):
+        y_x_1_point = lp.getNOrderOutput([states[i][1]], coef1, 1)
+        states[i][2] = np.cos(np.arctan(y_x_1_point[0])) * states[i][2]
+        y_x_2_point = lp.getNOrderOutput([states[i][1]], coef1, 2)
+        states[i][3] = np.cos(np.arctan(y_x_2_point[0])) * states[i][3]
+
     # state
     coef2, order2, error2 = lp.solveNOrderFunction(states)
     print("order: ", order2)
@@ -100,13 +107,12 @@ if __name__ == "__main__":
     # # (start_x, start_y, strat_theta)
     # # (target_x, target_y, target_theta)
     # P0 = AdjustmentControlPointStruct_xytheta(0, 0, 0)
-    # P1 = AdjustmentControlPointStruct_xytheta(10, 4, 0)
+    # P1 = AdjustmentControlPointStruct_xytheta(10, 5, 0)
     # # (start_t, start_x, start_vx, start_ax)
     # # (target_t, target_x, target_vx, target_ax)
     # S0 = AdjustmentControlPointStruct_txva(0, 0, 1, 0)
-    # S1 = AdjustmentControlPointStruct_txva(5, 10, 1, 0)
+    # S1 = AdjustmentControlPointStruct_txva(8, 10, 1, 0)
     # x, y, t, vx, vy = makeAdjustmentLine([P0, P1], [S0, S1])
-
     # show_result([P0, P1], x, y, t, vx, vy)
 
 
@@ -123,7 +129,5 @@ if __name__ == "__main__":
     S2 = AdjustmentControlPointStruct_txva(9, 9, 1)
     S3 = AdjustmentControlPointStruct_txva(10, 10, 1, 0)
     x, y, t, vx, vy = makeAdjustmentLine([P0, P1, P2, P3], [S0, S1, S2, S3])
-
     show_result([P0, P1, P2, P3], x, y, t, vx, vy)
-
 
